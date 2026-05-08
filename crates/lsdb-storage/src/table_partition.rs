@@ -12,7 +12,9 @@ pub struct TablePartition {
 
 impl TablePartition {
     pub fn new(schema: &TableSchema) -> Self {
-        let columns = (0..schema.column_count()).map(ColumnSegment::new).collect();
+        let columns = (0..schema.column_count())
+            .map(|i| ColumnSegment::new(schema.column_at(i).data_type()))
+            .collect();
 
         Self {
             columns,
@@ -39,7 +41,7 @@ impl TablePartition {
             let col = &mut self.columns[col_index];
             col.reserve(row_count * col_byte_width);
             for row_bytes in bytes.chunks_exact(row_byte_width) {
-                col.push_dtype_val(&row_bytes[col_byte_start..col_byte_end], schema);
+                col.push_val(&row_bytes[col_byte_start..col_byte_end]);
             }
             col_byte_start = col_byte_end;
         }

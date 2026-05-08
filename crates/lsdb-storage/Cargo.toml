@@ -6,8 +6,9 @@ repository = "https://github.com/wyattgill9/db"
 license = "MIT"
 
 [dependencies]
+lsdb-types = { path = "../lsdb-types" }
+
 cardinality-estimator = { workspace = true }
 fastbloom = { workspace = true }
-lsdb-types = { path = "../lsdb-types" }
 rapidhash = { workspace = true }
 zerocopy = { workspace = true }

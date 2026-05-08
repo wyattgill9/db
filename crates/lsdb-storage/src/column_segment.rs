@@ -1,19 +1,19 @@
-use lsdb_types::TableSchema;
+use lsdb_types::DataTypeKind;
 
 use crate::ColumnSegmentStatistics;
 
 #[derive(Debug)]
 pub struct ColumnSegment {
     data: Vec<u8>,
-    column_def_index: usize,
+    dtype: DataTypeKind,
     stats: ColumnSegmentStatistics,
 }
 
 impl ColumnSegment {
-    pub fn new(column_index: usize) -> Self {
+    pub fn new(dtype: DataTypeKind) -> Self {
         Self {
             data: Vec::new(),
-            column_def_index: column_index,
+            dtype, 
             stats: ColumnSegmentStatistics::new(),
         }
     }
@@ -22,9 +22,8 @@ impl ColumnSegment {
         self.data.reserve(additional);
     }
 
-    pub fn push_dtype_val(&mut self, bytes: &[u8], schema: &TableSchema) {
-        self.stats
-            .update(bytes, schema.column_at(self.column_def_index).data_type());
+    pub fn push_val(&mut self, bytes: &[u8]) {
+        self.stats.update(bytes, self.dtype);
         self.data.extend_from_slice(bytes);
     }
 
@@ -32,7 +31,7 @@ impl ColumnSegment {
         &self.data
     }
 
-    pub fn materialize_f32(&self) -> f32 {
+    pub fn as_f32_slice(&self) -> f32 {
         0.0
     }
 }
