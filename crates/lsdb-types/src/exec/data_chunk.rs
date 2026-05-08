@@ -1,11 +1,17 @@
-use crate::exec::{ExecutionVector, FlatVector};
+use crate::Vector;
 
 pub struct DataChunk {
-    chunks: Vec<Box<dyn ExecutionVector>>,
+    chunks: Vec<Vector>,
+}
+
+impl Default for DataChunk {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DataChunk {
-    pub fn column<T: 'static>(&self, idx: usize) -> Option<&FlatVector<T>> {
-        self.chunks[idx].as_any().downcast_ref::<FlatVector<T>>()
+    pub fn new() -> Self {
+        Self { chunks: Vec::new() }
     }
 }

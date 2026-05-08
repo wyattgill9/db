@@ -23,7 +23,8 @@ impl ColumnSegment {
     }
 
     pub fn push_dtype_val(&mut self, bytes: &[u8], schema: &TableSchema) {
-        self.stats.update(bytes, schema, self.column_def_index);
+        self.stats
+            .update(bytes, schema.column_at(self.column_def_index).data_type());
         self.data.extend_from_slice(bytes);
     }
 

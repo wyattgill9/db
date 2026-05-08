@@ -441,6 +441,10 @@ dependencies = [
 [[package]]
 name = "lsdb-types"
 version = "0.1.0"
+dependencies = [
+ "bytes",
+ "zerocopy",
+]
 
 [[package]]
 name = "lsdb-wal"

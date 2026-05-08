@@ -1,6 +1,7 @@
 use cardinality_estimator::CardinalityEstimator;
 use fastbloom::BloomFilter;
-use lsdb_types::TableSchema;
+
+use lsdb_types::DataTypeKind;
 
 use crate::ZoneMap;
 
@@ -30,13 +31,12 @@ impl ColumnSegmentStatistics {
         }
     }
 
-    pub fn update(&mut self, bytes: &[u8], schema: &TableSchema, column_def_idx: usize) {
+    pub fn update(&mut self, bytes: &[u8], dtype: DataTypeKind) {
         if let Some(bloom_filter) = &mut self.bloom {
             bloom_filter.insert(bytes);
         }
 
         self.hll.insert(bytes);
-        self.zone_map
-            .update(bytes, schema.column_at(column_def_idx).data_type());
+        self.zone_map.update(bytes, dtype);
     }
 }

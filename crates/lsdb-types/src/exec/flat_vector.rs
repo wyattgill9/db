@@ -1,15 +1,34 @@
-use crate::exec::ExecutionVector;
+use bytes::Bytes;
+use zerocopy::{FromBytes, Immutable};
 
-pub struct FlatVector<T> {
-    values: Vec<T>,
+use crate::DataTypeKind;
+
+pub struct FlatVector {
+    dtype: DataTypeKind,
+    data: Bytes,
+    count: u16,
 }
 
-impl<T: 'static> ExecutionVector for FlatVector<T> {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
+impl FlatVector {
+    pub fn new(dtype: DataTypeKind) -> Self {
+        Self {
+            dtype,
+            data: Bytes::new(),
+            count: 0,
+        }
     }
 
-    fn len(&self) -> usize {
-        self.values.len()
+    pub fn as_view<T: Immutable + FromBytes>(&self) -> FlatVectorView<'_, T> {
+        unsafe {
+            FlatVectorView {
+                data: FromBytes::ref_from_bytes(&self.data).unwrap_unchecked(),
+                count: self.count,
+            }
+        }
     }
+}
+
+pub struct FlatVectorView<'a, T> {
+    data: &'a [T],
+    count: u16,
 }
