@@ -7,12 +7,12 @@ planning, and execution are all stubs.
 
 ## Repo Status
 
-- Workspace default member is `crates/lsdb-cli`.
+- Workspace default member is `crates/cli`.
 - `cargo clippy --workspace --all-targets` succeeds with one pre-existing
-  warning in `lsdb-server` (unused function).
-- `cargo nextest run --workspace` passes with 2 tests (both in `lsdb-sql`
+  warning in `server` (unused function).
+- `cargo nextest run --workspace` passes with 2 tests (both in `sql`
   `translate` module).
-- `cargo run -p lsdb-cli` creates a table, runs SQL through parse and
+- `cargo run -p cli` creates a table, runs SQL through parse and
   translate, and prints the `UnresolvedPlan`. Binding and planning are
   commented out.
 - No external error handling crate. All error paths use `panic!`.
@@ -22,17 +22,17 @@ planning, and execution are all stubs.
 ```text
 lightspeedDB/
 ├── crates/
-│   ├── lsdb-catalog
-│   ├── lsdb-cli
-│   ├── lsdb-execution
-│   ├── lsdb-mvcc
-│   ├── lsdb-optimizer
-│   ├── lsdb-scheduler
-│   ├── lsdb-server
-│   ├── lsdb-sql
-│   ├── lsdb-storage
-│   ├── lsdb-types
-│   └── lsdb-wal
+│   ├── catalog
+│   ├── cli
+│   ├── execution
+│   ├── mvcc
+│   ├── optimizer
+│   ├── scheduler
+│   ├── server
+│   ├── sql
+│   ├── storage
+│   ├── types
+│   └── wal
 ├── Cargo.toml          (resolver = "3")
 ├── justfile
 ├── flake.nix / flake.lock
@@ -67,8 +67,8 @@ on every value.
 
 ```text
 SQL text
-  -> lsdb_sql::parse()      -- sqlparser wrapper, validates single statement
-  -> lsdb_sql::translate()  -- AST -> UnresolvedPlan (SELECT + GROUP BY only)
+  -> sql::parse()      -- sqlparser wrapper, validates single statement
+  -> sql::translate()  -- AST -> UnresolvedPlan (SELECT + GROUP BY only)
 ```
 
 The pipeline stops at `UnresolvedPlan`. Binding, planning, and execution are
@@ -78,16 +78,16 @@ all commented out in the CLI.
 
 ```text
 UnresolvedPlan
-  -> lsdb_sql::bind()               -- ignores input, returns ResolvedPlan::None
-  -> lsdb_optimizer::build_plan()    -- ignores input, returns LogicalPlan::None
-  -> lsdb_optimizer::optimize()      -- pass-through
-  -> lsdb_execution::physical_plan() -- returns PhysicalPlan::None
-  -> lsdb_execution::execute()       -- returns QueryResult::default()
+  -> sql::bind()               -- ignores input, returns ResolvedPlan::None
+  -> optimizer::build_plan()    -- ignores input, returns LogicalPlan::None
+  -> optimizer::optimize()      -- pass-through
+  -> execution::physical_plan() -- returns PhysicalPlan::None
+  -> execution::execute()       -- returns QueryResult::default()
 ```
 
 ## Crate Responsibilities
 
-### `lsdb-types`
+### `types`
 
 Shared schema, datatype, plan, execution vector, and result types.
 
@@ -120,7 +120,7 @@ Execution vector types (defined, unused by any real execution):
 - `OutputTable` wraps a `String`; `from_query_result()` returns an empty
   string.
 
-### `lsdb-storage`
+### `storage`
 
 In-memory columnar storage primitives.
 
@@ -139,7 +139,7 @@ In-memory columnar storage primitives.
   (`StringRef` / `StringBuffer` / `ArenaBuffer`). All functions are
   `todo!()` and the module is commented out of `lib.rs`.
 
-### `lsdb-catalog`
+### `catalog`
 
 In-memory catalog and table lifecycle layer.
 
@@ -162,7 +162,7 @@ In-memory catalog and table lifecycle layer.
 Write buffer uses `mem::swap` to drain without re-allocating, then restores
 the cleared allocation for reuse.
 
-### `lsdb-sql`
+### `sql`
 
 SQL front-end with real parsing and translation; binding is a stub.
 
@@ -178,7 +178,7 @@ SQL front-end with real parsing and translation; binding is a stub.
 2 tests cover the parse-translate pipeline for GROUP BY queries with
 `count(*)` and `avg()`.
 
-### `lsdb-optimizer`
+### `optimizer`
 
 Stub logical plan construction and optimization.
 
@@ -186,7 +186,7 @@ Stub logical plan construction and optimization.
   `LogicalPlan::None`.
 - `optimize(LogicalPlan) -> LogicalPlan` is a pass-through.
 
-### `lsdb-execution`
+### `execution`
 
 Stub physical planning and execution.
 
@@ -197,7 +197,7 @@ Stub physical planning and execution.
 The execution benchmark loads 100K `Vec3` rows and benchmarks `execute()`,
 but exercises no real execution logic since execution is stubbed.
 
-### `lsdb-cli`
+### `cli`
 
 Demo binary (64-bit only) that wires crates together:
 
@@ -209,14 +209,14 @@ Demo binary (64-bit only) that wires crates together:
 
 The `bind` / `build_plan` / `optimize` calls are commented out.
 
-### `lsdb-server`
+### `server`
 
 Networking scaffold only. Contains a private unused `run_server_main()` async
 function that binds `0.0.0.0:8080` via `socket2`, converts to a Tokio
 `TcpListener`, and accepts one connection. No protocol handling, no
 integration with database crates.
 
-### `lsdb-mvcc`, `lsdb-scheduler`, `lsdb-wal`
+### `mvcc`, `scheduler`, `wal`
 
 These crates have manifests and dependency edges, but their `lib.rs` files
 are empty.
@@ -261,19 +261,19 @@ Database
 ## Dependency Shape
 
 ```text
-lsdb-types  (no deps)
-  -> lsdb-storage  (+ zerocopy, cardinality-estimator, fastbloom, rapidhash)
-  -> lsdb-catalog  (+ rapidhash)
+types  (no deps)
+  -> storage  (+ zerocopy, cardinality-estimator, fastbloom, rapidhash)
+  -> catalog  (+ rapidhash)
 
-lsdb-sql        -> { lsdb-types, lsdb-catalog, sqlparser }
-lsdb-optimizer  -> { lsdb-types }
-lsdb-execution  -> { lsdb-types, lsdb-storage, lsdb-catalog }
-lsdb-cli        -> all of the above
+sql        -> { types, catalog, sqlparser }
+optimizer  -> { types }
+execution  -> { types, storage, catalog }
+cli        -> all of the above
 
-lsdb-mvcc       -> { lsdb-types, lsdb-storage }      (empty)
-lsdb-scheduler  -> { lsdb-types, lsdb-execution }    (empty)
-lsdb-wal        -> { lsdb-types, lsdb-storage }      (empty)
-lsdb-server     -> { tokio, socket2 }                 (no DB deps)
+mvcc       -> { types, storage }      (empty)
+scheduler  -> { types, execution }    (empty)
+wal        -> { types, storage }      (empty)
+server     -> { tokio, socket2 }                 (no DB deps)
 ```
 
 ## Key External Dependencies
@@ -292,9 +292,9 @@ lsdb-server     -> { tokio, socket2 }                 (no DB deps)
 ## Build and Benchmark Notes
 
 - `justfile` defines `build`, `run`, `bench`, `check`, `test`, and `fmt`.
-- `crates/lsdb-catalog/benches/insert.rs` exercises the real write path with
+- `crates/catalog/benches/insert.rs` exercises the real write path with
   100K `Vec3` rows (single-row and bulk variants).
-- `crates/lsdb-execution/benches/query.rs` compiles and runs but exercises
+- `crates/execution/benches/query.rs` compiles and runs but exercises
   no real execution logic.
 - Nix devShell (`flake.nix`) provides Rust nightly and cargo-nextest.
 
@@ -316,4 +316,4 @@ The largest gaps between the current repository and a functioning database:
 - Storage statistics (zone maps, Bloom, HLL) built on write but never read
 - Variable-length string support sketched but unimplemented
 - `QueryResult` and `OutputTable` are empty placeholders
-- 2 tests total, all in `lsdb-sql` translate module
+- 2 tests total, all in `sql` translate module
