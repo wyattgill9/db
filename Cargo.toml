@@ -1,19 +1,19 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
-default-members = ["crates/lsdb-cli"]
+default-members = ["crates/cli"]
 
 [workspace.dependencies]
-# lsdb-storage
+# storage
 cardinality-estimator = "1"
 fastbloom = "0.17.0"
 bytes = "1.11.1"
 
-# lsdb-server
+# server
 socket2 = "0.6"
 tokio = { version = "1.50.0", features = ["full"] }
 
-# lsdb-sql
+# sql
 sqlparser = "0.61.0"
 
 # util

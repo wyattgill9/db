@@ -2,17 +2,17 @@ build:
 	cargo build
 
 run:
-	cargo run -p lsdb-cli
+	cargo run -p cli
 
 bench:
-	cargo bench --bench insert -p lsdb-catalog
-	cargo bench --bench query -p lsdb-execution
+	cargo bench --bench insert -p catalog
+	cargo bench --bench query -p execution
 
 bench-insert:
-	cargo bench --bench insert -p lsdb-catalog
+	cargo bench --bench insert -p catalog
 
 bench-query:
-	cargo bench --bench query -p lsdb-execution
+	cargo bench --bench query -p execution
 
 check:
 	cargo clippy --workspace

@@ -1,0 +1,19 @@
+[package]
+name = "catalog"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/wyattgill9/db"
+license = "MIT"
+
+[[bench]]
+harness = false
+name = "insert"
+
+[dependencies]
+storage = { path = "../storage" }
+types = { path = "../types" }
+rapidhash = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+zerocopy = { workspace = true }

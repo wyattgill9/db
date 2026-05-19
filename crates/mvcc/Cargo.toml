@@ -1,0 +1,10 @@
+[package]
+name = "mvcc"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/wyattgill9/db"
+license = "MIT"
+
+[dependencies]
+storage = { path = "../storage" }
+types = { path = "../types" }
