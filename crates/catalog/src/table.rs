@@ -1,6 +1,3 @@
-use storage::TablePartition;
-use types::TableSchema;
-
 use crate::TableStatistics;
 
 const CAPACITY_ROWS_WRITE_BUFFER: usize = 4096;
@@ -28,16 +25,16 @@ impl TableMeta {
 #[derive(Debug)]
 pub struct DBTable {
     meta: TableMeta,
-    schema: TableSchema,
-    table_partitions: Vec<TablePartition>,
+    schema: types::TableSchema,
+    table_partitions: Vec<storage::TablePartition>,
     stats: TableStatistics,
 
     write_buffer: Vec<u8>,
 }
 
 impl DBTable {
-    pub fn new(name: String, id: u32, schema: TableSchema) -> Self {
-        let table_partitions = vec![TablePartition::new(&schema)];
+    pub fn new(name: String, id: u32, schema: types::TableSchema) -> Self {
+        let table_partitions = vec![storage::TablePartition::new(&schema)];
         let buffer_capacity_bytes = CAPACITY_ROWS_WRITE_BUFFER * schema.row_size_bytes();
 
         Self {
@@ -94,7 +91,7 @@ impl DBTable {
 
             if is_full {
                 self.table_partitions
-                    .push(TablePartition::new(&self.schema));
+                    .push(storage::TablePartition::new(&self.schema));
             } else {
                 // Current table partition has capacity; no action needed.
             }
@@ -122,11 +119,11 @@ impl DBTable {
         self.meta.id()
     }
 
-    pub fn schema(&self) -> &TableSchema {
+    pub fn schema(&self) -> &types::TableSchema {
         &self.schema
     }
 
-    pub fn table_partitions(&self) -> &[TablePartition] {
+    pub fn table_partitions(&self) -> &[storage::TablePartition] {
         &self.table_partitions
     }
 

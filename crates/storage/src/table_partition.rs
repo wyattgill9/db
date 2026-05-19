@@ -1,5 +1,3 @@
-use types::TableSchema;
-
 use crate::ColumnSegment;
 
 const TABLE_PARTITION_CAPACITY: usize = 64 * 2048;
@@ -11,7 +9,7 @@ pub struct TablePartition {
 }
 
 impl TablePartition {
-    pub fn new(schema: &TableSchema) -> Self {
+    pub fn new(schema: &types::TableSchema) -> Self {
         let columns = (0..schema.column_count())
             .map(|i| ColumnSegment::new(schema.column_at(i).data_type()))
             .collect();
@@ -27,7 +25,7 @@ impl TablePartition {
     /// Caller must pre-validate: `bytes.len()` is a multiple of
     /// `schema.row_byte_width()`, and the row count does not exceed
     /// `rows_available()`.
-    pub fn insert_rows(&mut self, schema: &TableSchema, bytes: &[u8]) {
+    pub fn insert_rows(&mut self, schema: &types::TableSchema, bytes: &[u8]) {
         let row_byte_width = schema.row_size_bytes();
         let row_count = bytes.len() / row_byte_width;
 

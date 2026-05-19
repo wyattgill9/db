@@ -1,9 +1,43 @@
-use catalog::Database;
+// use execution::execute;
+// use types::{OutputTable, PhysicalPlan};
+// use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+// #[repr(C)]
+// #[derive(Clone, Copy, FromBytes, IntoBytes, Immutable, KnownLayout)]
+// struct Vec3 {
+//     x: f32,
+//     y: f32,
+//     z: f32,
+// }
+
+// const TABLE_NAME: &str = "vec3";
 
 #[rustfmt::skip]
-#[cfg(target_pointer_width = "64")]
 fn main() {
-    let mut db = Database::new();
+    let mut db = catalog::Database::new();
+
+    // db.create_table(TABLE_NAME, &[
+    //     ("x", "f32"),
+    //     ("y", "f32"), ("z", "f32")
+    // ]);
+
+    // let points: Vec<Vec3> = (0..5)
+    //     .map(|i| {
+    //         let t = i as f32;
+    //         Vec3 {
+    //             x: t,
+    //             y: t * 2.0,
+    //             z: t * 3.0,
+    //         }
+    //     })
+    //     .collect();
+
+    // db.insert(TABLE_NAME, points.as_bytes());
+    // db.flush_table_writes(TABLE_NAME);
+
+    // let result = execute(PhysicalPlan::default(), &db);
+    // let output = OutputTable::from_query_result(&result);
+    // println!("{output}");
 
     db.create_table("trips", &[
         ("cab_type", "u8"),
@@ -19,7 +53,7 @@ fn main() {
     println!("{logical_plan:#?}");
 }
 
-fn build_unresolved_plan(sql: &str, _db: &Database) -> types::UnresolvedPlan {
+fn build_unresolved_plan(sql: &str, _db: &catalog::Database) -> types::UnresolvedPlan {
     let parsed = sql::parse(sql);
     sql::translate(parsed)
 

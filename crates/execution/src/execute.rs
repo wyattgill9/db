@@ -1,6 +1,3 @@
-use catalog::Database;
-use types::{PhysicalPlan, QueryResult};
-
-pub fn execute(_pplan: PhysicalPlan, _database: &Database) -> QueryResult {
-    QueryResult::default()
+pub fn execute(_pplan: types::PhysicalPlan, _database: &catalog::Database) -> types::QueryResult {
+    types::QueryResult::default()
 }

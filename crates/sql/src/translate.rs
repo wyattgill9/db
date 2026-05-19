@@ -1,12 +1,10 @@
 use crate::parse::ParsedStatement;
-use types::UnresolvedPlan;
-use types::plan::{UnresolvedExpr, UnresolvedFunctionArgs, UnresolvedSelectItem};
 use sqlparser::ast::{
     Expr as SqlExpr, FunctionArg, FunctionArgExpr, FunctionArguments, GroupByExpr, SelectFlavor,
     SelectItem as SqlSelectItem, SetExpr, Statement, TableFactor, TableWithJoins,
 };
 
-pub fn translate(statement: ParsedStatement) -> UnresolvedPlan {
+pub fn translate(statement: ParsedStatement) -> types::UnresolvedPlan {
     let ParsedStatement(statement) = statement;
 
     match statement {
@@ -61,9 +59,11 @@ fn ensure_supported_select(select: &sqlparser::ast::Select) {
     }
 }
 
-fn translate_expr(expression: SqlExpr) -> UnresolvedExpr {
+fn translate_expr(expression: SqlExpr) -> types::plan::UnresolvedExpr {
     match expression {
-        SqlExpr::Identifier(identifier) => UnresolvedExpr::Column(identifier.value),
+        SqlExpr::Identifier(identifier) => {
+            types::plan::UnresolvedExpr::Column(identifier.value)
+        }
         SqlExpr::Function(function) => translate_function(function),
         other => {
             panic!("unsupported expression: {other:?}")
@@ -104,7 +104,7 @@ fn translate_from(from: Vec<TableWithJoins>) -> String {
     }
 }
 
-fn translate_function(function: sqlparser::ast::Function) -> UnresolvedExpr {
+fn translate_function(function: sqlparser::ast::Function) -> types::plan::UnresolvedExpr {
     let sqlparser::ast::Function {
         name,
         uses_odbc_syntax,
@@ -136,7 +136,10 @@ fn translate_function(function: sqlparser::ast::Function) -> UnresolvedExpr {
     }
 }
 
-fn translate_function_arguments(name: String, arguments: FunctionArguments) -> UnresolvedExpr {
+fn translate_function_arguments(
+    name: String,
+    arguments: FunctionArguments,
+) -> types::plan::UnresolvedExpr {
     match arguments {
         FunctionArguments::List(argument_list) => {
             let sqlparser::ast::FunctionArgumentList {
@@ -159,9 +162,9 @@ fn translate_function_arguments(name: String, arguments: FunctionArguments) -> U
                 args.as_slice(),
                 [FunctionArg::Unnamed(FunctionArgExpr::Wildcard)]
             ) {
-                UnresolvedExpr::Function {
+                types::plan::UnresolvedExpr::Function {
                     name,
-                    args: UnresolvedFunctionArgs::Star,
+                    args: types::plan::UnresolvedFunctionArgs::Star,
                 }
             } else {
                 let mut translated = Vec::with_capacity(args.len());
@@ -180,9 +183,9 @@ fn translate_function_arguments(name: String, arguments: FunctionArguments) -> U
                     }
                 }
 
-                UnresolvedExpr::Function {
+                types::plan::UnresolvedExpr::Function {
                     name,
-                    args: UnresolvedFunctionArgs::Exprs(translated),
+                    args: types::plan::UnresolvedFunctionArgs::Exprs(translated),
                 }
             }
         }
@@ -192,7 +195,7 @@ fn translate_function_arguments(name: String, arguments: FunctionArguments) -> U
     }
 }
 
-fn translate_group_by(group_by: GroupByExpr) -> Vec<UnresolvedExpr> {
+fn translate_group_by(group_by: GroupByExpr) -> Vec<types::plan::UnresolvedExpr> {
     match group_by {
         GroupByExpr::Expressions(expressions, modifiers) => {
             if modifiers.is_empty() {
@@ -213,7 +216,7 @@ fn translate_group_by(group_by: GroupByExpr) -> Vec<UnresolvedExpr> {
     }
 }
 
-fn translate_query(query: sqlparser::ast::Query) -> UnresolvedPlan {
+fn translate_query(query: sqlparser::ast::Query) -> types::UnresolvedPlan {
     let sqlparser::ast::Query {
         with,
         body,
@@ -258,7 +261,7 @@ fn translate_query(query: sqlparser::ast::Query) -> UnresolvedPlan {
     }
 }
 
-fn translate_select(select: sqlparser::ast::Select) -> UnresolvedPlan {
+fn translate_select(select: sqlparser::ast::Select) -> types::UnresolvedPlan {
     ensure_supported_select(&select);
 
     let sqlparser::ast::Select {
@@ -271,23 +274,23 @@ fn translate_select(select: sqlparser::ast::Select) -> UnresolvedPlan {
     let from = translate_from(from);
     let group_by = translate_group_by(group_by);
 
-    UnresolvedPlan::Select {
+    types::UnresolvedPlan::Select {
         projection,
         from,
         group_by,
     }
 }
 
-fn translate_select_item(item: SqlSelectItem) -> UnresolvedSelectItem {
+fn translate_select_item(item: SqlSelectItem) -> types::plan::UnresolvedSelectItem {
     match item {
-        SqlSelectItem::UnnamedExpr(expression) => UnresolvedSelectItem {
+        SqlSelectItem::UnnamedExpr(expression) => types::plan::UnresolvedSelectItem {
             expr: translate_expr(expression),
             alias: None,
         },
         SqlSelectItem::ExprWithAlias {
             expr: expression,
             alias,
-        } => UnresolvedSelectItem {
+        } => types::plan::UnresolvedSelectItem {
             expr: translate_expr(expression),
             alias: Some(alias.value),
         },
@@ -300,15 +303,13 @@ fn translate_select_item(item: SqlSelectItem) -> UnresolvedSelectItem {
 #[cfg(test)]
 mod tests {
     use crate::{parse, translate};
-    use types::UnresolvedPlan;
-    use types::plan::{UnresolvedExpr, UnresolvedFunctionArgs};
 
     #[test]
     fn query_group_by_count_star() {
         let sql = "SELECT cab_type, count(*) \
                    FROM trips GROUP BY cab_type";
         let plan = translate(parse(sql));
-        let UnresolvedPlan::Select {
+        let types::UnresolvedPlan::Select {
             projection,
             from,
             group_by,
@@ -317,22 +318,22 @@ mod tests {
         assert_eq!(projection.len(), 2);
         assert!(matches!(
             &projection[0].expr,
-            UnresolvedExpr::Column(column)
+            types::plan::UnresolvedExpr::Column(column)
                 if column == "cab_type"
         ));
         assert!(projection[0].alias.is_none());
         assert!(matches!(
             &projection[1].expr,
-            UnresolvedExpr::Function {
+            types::plan::UnresolvedExpr::Function {
                 name,
-                args: UnresolvedFunctionArgs::Star,
+                args: types::plan::UnresolvedFunctionArgs::Star,
             } if name == "count"
         ));
         assert_eq!(from, "trips");
         assert_eq!(group_by.len(), 1);
         assert!(matches!(
             &group_by[0],
-            UnresolvedExpr::Column(column)
+            types::plan::UnresolvedExpr::Column(column)
                 if column == "cab_type"
         ));
     }
@@ -343,23 +344,23 @@ mod tests {
                    avg(total_amount) FROM trips \
                    GROUP BY passenger_count";
         let plan = translate(parse(sql));
-        let UnresolvedPlan::Select {
+        let types::UnresolvedPlan::Select {
             projection,
             from,
             group_by,
         } = plan;
 
         assert_eq!(projection.len(), 2);
-        if let UnresolvedExpr::Function {
+        if let types::plan::UnresolvedExpr::Function {
             name,
-            args: UnresolvedFunctionArgs::Exprs(arguments),
+            args: types::plan::UnresolvedFunctionArgs::Exprs(arguments),
         } = &projection[1].expr
         {
             assert_eq!(name, "avg");
             assert_eq!(arguments.len(), 1);
             assert!(matches!(
                 &arguments[0],
-                UnresolvedExpr::Column(column)
+                types::plan::UnresolvedExpr::Column(column)
                     if column == "total_amount"
             ));
         } else {
@@ -369,7 +370,7 @@ mod tests {
         assert_eq!(group_by.len(), 1);
         assert!(matches!(
             &group_by[0],
-            UnresolvedExpr::Column(column)
+            types::plan::UnresolvedExpr::Column(column)
                 if column == "passenger_count"
         ));
     }

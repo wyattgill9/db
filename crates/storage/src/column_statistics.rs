@@ -1,8 +1,6 @@
 use cardinality_estimator::CardinalityEstimator;
 use fastbloom::BloomFilter;
 
-use types::DataTypeKind;
-
 use crate::ZoneMap;
 
 #[derive(Debug)]
@@ -31,7 +29,7 @@ impl ColumnSegmentStatistics {
         }
     }
 
-    pub fn update(&mut self, bytes: &[u8], dtype: DataTypeKind) {
+    pub fn update(&mut self, bytes: &[u8], dtype: types::DataTypeKind) {
         if let Some(bloom_filter) = &mut self.bloom {
             bloom_filter.insert(bytes);
         }

@@ -1,5 +1,3 @@
-use types::LogicalPlan;
-
-pub fn optimize(plan: LogicalPlan) -> LogicalPlan {
+pub fn optimize(plan: types::LogicalPlan) -> types::LogicalPlan {
     plan
 }

@@ -2,7 +2,6 @@ use std::mem::size_of;
 
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use types::DataTypeKind;
 
 #[derive(Debug)]
 pub struct ZoneMap {
@@ -33,17 +32,17 @@ impl ZoneMap {
         self.min_bytes
     }
 
-    pub fn update(&mut self, bytes: &[u8], dtype: DataTypeKind) {
+    pub fn update(&mut self, bytes: &[u8], dtype: types::DataTypeKind) {
         match dtype {
-            DataTypeKind::U64 => self.compare_bytes::<u64>(&bytes[0..8]),
-            DataTypeKind::U32 => self.compare_bytes::<u32>(&bytes[0..4]),
-            DataTypeKind::U8 => self.compare_bytes::<u8>(&bytes[0..1]),
-            DataTypeKind::I64 => self.compare_bytes::<i64>(&bytes[0..8]),
-            DataTypeKind::I32 => self.compare_bytes::<i32>(&bytes[0..4]),
-            DataTypeKind::I8 => self.compare_bytes::<i8>(&bytes[0..1]),
-            DataTypeKind::F64 => self.compare_bytes::<f64>(&bytes[0..8]),
-            DataTypeKind::F32 => self.compare_bytes::<f32>(&bytes[0..4]),
-            DataTypeKind::BOOL => self.compare_bytes::<u8>(&bytes[0..1]),
+            types::DataTypeKind::U64 => self.compare_bytes::<u64>(&bytes[0..8]),
+            types::DataTypeKind::U32 => self.compare_bytes::<u32>(&bytes[0..4]),
+            types::DataTypeKind::U8 => self.compare_bytes::<u8>(&bytes[0..1]),
+            types::DataTypeKind::I64 => self.compare_bytes::<i64>(&bytes[0..8]),
+            types::DataTypeKind::I32 => self.compare_bytes::<i32>(&bytes[0..4]),
+            types::DataTypeKind::I8 => self.compare_bytes::<i8>(&bytes[0..1]),
+            types::DataTypeKind::F64 => self.compare_bytes::<f64>(&bytes[0..8]),
+            types::DataTypeKind::F32 => self.compare_bytes::<f32>(&bytes[0..4]),
+            types::DataTypeKind::BOOL => self.compare_bytes::<u8>(&bytes[0..1]),
         }
     }
 

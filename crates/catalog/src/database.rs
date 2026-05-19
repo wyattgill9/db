@@ -1,11 +1,9 @@
 use std::collections::HashMap;
 
-use types::TableSchema;
-
 use crate::table::DBTable;
 
 pub struct Database {
-    tables: HashMap<String, DBTable, rapidhash::fast::RandomState>,
+    tables: HashMap<String, Box<DBTable>, rapidhash::fast::RandomState>,
 }
 
 impl Default for Database {
@@ -21,7 +19,7 @@ impl Database {
         }
     }
 
-    pub fn create_table_with_schema(&mut self, table_name: &str, schema: TableSchema) {
+    pub fn create_table_with_schema(&mut self, table_name: &str, schema: types::TableSchema) {
         if self.tables.contains_key(table_name) {
             panic!("table already exists: {table_name}");
         } else {
@@ -29,12 +27,12 @@ impl Database {
             let id = u32::try_from(self.tables.len())
                 .unwrap_or_else(|_| panic!("table count exceeds u32::MAX"));
             let table = DBTable::new(table_name.clone(), id, schema);
-            self.tables.insert(table_name, table);
+            self.tables.insert(table_name, Box::new(table));
         }
     }
 
     pub fn create_table(&mut self, table_name: &str, fields: &[(&str, &str)]) {
-        self.create_table_with_schema(table_name, TableSchema::from_fields(fields));
+        self.create_table_with_schema(table_name, types::TableSchema::from_fields(fields));
     }
 
     pub fn insert(&mut self, table_name: &str, bytes: &[u8]) {
@@ -53,7 +51,7 @@ impl Database {
     }
 
     pub fn get_table(&self, table_name: &str) -> Option<&DBTable> {
-        self.tables.get(table_name)
+        self.tables.get(table_name).map(|t| &**t)
     }
 
     pub fn table_mut(&mut self, table_name: &str) -> &mut DBTable {

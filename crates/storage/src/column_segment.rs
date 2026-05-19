@@ -1,16 +1,14 @@
-use types::DataTypeKind;
-
 use crate::ColumnSegmentStatistics;
 
 #[derive(Debug)]
 pub struct ColumnSegment {
     data: Vec<u8>,
-    dtype: DataTypeKind,
+    dtype: types::DataTypeKind,
     stats: ColumnSegmentStatistics,
 }
 
 impl ColumnSegment {
-    pub fn new(dtype: DataTypeKind) -> Self {
+    pub fn new(dtype: types::DataTypeKind) -> Self {
         Self {
             data: Vec::new(),
             dtype, 

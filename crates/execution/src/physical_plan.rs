@@ -1,5 +1,3 @@
-use types::{LogicalPlan, PhysicalPlan};
-
-pub fn physical_plan(_lplan: LogicalPlan) -> PhysicalPlan {
-    PhysicalPlan::default()
+pub fn physical_plan(_lplan: types::LogicalPlan) -> types::PhysicalPlan {
+    types::PhysicalPlan::default()
 }

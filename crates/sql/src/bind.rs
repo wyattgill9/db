@@ -1,6 +1,3 @@
-use catalog::Database;
-use types::{ResolvedPlan, UnresolvedPlan};
-
-pub fn bind(_plan: UnresolvedPlan, _database: &Database) -> ResolvedPlan {
-    ResolvedPlan::default()
+pub fn bind(_plan: types::UnresolvedPlan, _database: &catalog::Database) -> types::ResolvedPlan {
+    types::ResolvedPlan::default()
 }

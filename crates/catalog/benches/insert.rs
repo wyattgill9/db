@@ -1,6 +1,4 @@
 use criterion::{BatchSize, Criterion, Throughput, criterion_group, criterion_main};
-use catalog::DBTable;
-use types::TableSchema;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[repr(C)]
@@ -12,16 +10,16 @@ struct Vec3 {
 }
 
 #[rustfmt::skip]
-fn schema() -> TableSchema {
-    TableSchema::from_fields(&[
+fn schema() -> types::TableSchema {
+    types::TableSchema::from_fields(&[
         ("x", "f32"),
         ("y", "f32"),
         ("z", "f32")
     ])
 }
 
-fn fresh_table() -> DBTable {
-    DBTable::new("bench".to_owned(), 0, schema())
+fn fresh_table() -> catalog::DBTable {
+    catalog::DBTable::new("bench".to_owned(), 0, schema())
 }
 
 #[rustfmt::skip]

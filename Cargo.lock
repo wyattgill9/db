@@ -161,6 +161,7 @@ dependencies = [
  "sql",
  "storage",
  "types",
+ "zerocopy",
 ]
 
 [[package]]

@@ -16,3 +16,4 @@ optimizer = { path = "../optimizer" }
 sql = { path = "../sql" }
 storage = { path = "../storage" }
 types = { path = "../types" }
+zerocopy = { workspace = true }

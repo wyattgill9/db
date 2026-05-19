@@ -1,7 +1,4 @@
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use catalog::Database;
-use execution::execute;
-use types::{OutputTable, PhysicalPlan};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[repr(C)]
@@ -15,9 +12,14 @@ struct Vec3 {
 const ROW_COUNT: usize = 100_000;
 const TABLE_NAME: &str = "vec3";
 
-fn loaded_database() -> Database {
-    let mut db = Database::new();
-    db.create_table(TABLE_NAME, &[("x", "f32"), ("y", "f32"), ("z", "f32")]);
+#[rustfmt::skip]
+fn loaded_database() -> catalog::Database {
+    let mut db = catalog::Database::new();
+    db.create_table(TABLE_NAME, &[
+        ("x", "f32"),
+        ("y", "f32"),
+        ("z", "f32")
+    ]);
 
     let points: Vec<Vec3> = (0..ROW_COUNT)
         .map(|i| {
@@ -35,8 +37,8 @@ fn loaded_database() -> Database {
     db
 }
 
-fn scan_plan() -> PhysicalPlan {
-    PhysicalPlan::default()
+fn scan_plan() -> types::PhysicalPlan {
+    types::PhysicalPlan::default()
 }
 
 fn bench_query(c: &mut Criterion) {
@@ -48,11 +50,11 @@ fn bench_query(c: &mut Criterion) {
     group.sample_size(20);
 
     group.bench_function("execute", |b| {
-        b.iter(|| execute(plan.clone(), &db));
+        b.iter(|| execution::execute(plan.clone(), &db));
     });
 
     group.bench_function("execute_with_output", |b| {
-        b.iter(|| OutputTable::from_query_result(&execute(plan.clone(), &db)));
+        b.iter(|| types::OutputTable::from_query_result(&execution::execute(plan.clone(), &db)));
     });
 
     group.finish();
